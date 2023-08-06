@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{
+use kemuler::{
     common_inputs,
     input_event::{ChangeBy, SetTo},
     simulator::Simulate,
@@ -8,10 +8,11 @@ use crate::{
 
 mod inner;
 mod virtual_key;
-use common_inputs::ButtonLike;
 pub use virtual_key::VirtualKey;
 
-impl ButtonLike for VirtualKey {}
+impl VirtualKey {
+    kemuler::button_like_impl_body! {}
+}
 
 impl fmt::Display for VirtualKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -33,7 +34,9 @@ pub enum MouseButton {
     X2,
 }
 
-impl ButtonLike for MouseButton {}
+impl MouseButton {
+    kemuler::button_like_impl_body! {}
+}
 
 impl fmt::Display for MouseButton {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -46,6 +49,7 @@ fn windowsify_common_mouse_button(button: common_inputs::MouseButton) -> MouseBu
         common_inputs::MouseButton::Left => MouseButton::Left,
         common_inputs::MouseButton::Middle => MouseButton::Middle,
         common_inputs::MouseButton::Right => MouseButton::Right,
+        _ => todo!(),
     }
 }
 
@@ -81,6 +85,7 @@ fn windowsify_common_key(key: common_inputs::Key) -> VirtualKey {
         common_inputs::Key::DownArrow => VirtualKey::DownArrow,
         common_inputs::Key::LeftArrow => VirtualKey::LeftArrow,
         common_inputs::Key::RightArrow => VirtualKey::RightArrow,
+        _ => todo!(),
     }
 }
 
