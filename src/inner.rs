@@ -283,6 +283,7 @@ pub fn deaccelerated_mouse_move_by(x: i32, y: i32) -> bool {
 /// return true if is successful
 #[allow(unused)]
 pub fn virtual_desktop_deaccelerated_mouse_move_by(x: i32, y: i32) -> bool {
+    // i'm not sure about this one
     let Some((current_x, current_y)) = get_cursor_position() else {
         return false;
     };

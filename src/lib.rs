@@ -170,7 +170,7 @@ impl Simulate<SetTo<common_inputs::MousePosition, (i32, i32)>> for Windows {
 impl Simulate<ChangeBy<common_inputs::MousePosition, (i32, i32)>> for Windows {
     fn simulate(&mut self, simulatable: ChangeBy<common_inputs::MousePosition, (i32, i32)>) {
         let ChangeBy { input: _, by } = simulatable;
-        inner::virtual_desktop_denormalized_mouse_move_to(by.0, by.1);
+        inner::deaccelerated_mouse_move_by(by.0, by.1);
     }
 }
 
