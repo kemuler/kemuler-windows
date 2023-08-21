@@ -105,9 +105,9 @@ impl Simulate<SetTo<VirtualKey, bool>> for Windows {
             to: is_down,
         } = simulatable;
         if is_down {
-            inner::virtual_key_down(key)
+            inner::send_input::virtual_key_down(key)
         } else {
-            inner::virtual_key_up(key)
+            inner::send_input::virtual_key_up(key)
         }
     }
 }
@@ -120,9 +120,9 @@ impl Simulate<SetTo<common_inputs::Key, bool>> for Windows {
         } = simulatable;
         let key = windowsify_common_key(key);
         if is_down {
-            inner::virtual_key_down(key)
+            inner::send_input::virtual_key_down(key)
         } else {
-            inner::virtual_key_up(key)
+            inner::send_input::virtual_key_up(key)
         }
     }
 }
@@ -135,9 +135,9 @@ impl Simulate<SetTo<common_inputs::Char, bool>> for Windows {
         } = simulatable;
         let char = char.0;
         if is_down {
-            inner::char_key_down(char)
+            inner::send_input::char_key_down(char)
         } else {
-            inner::char_key_up(char)
+            inner::send_input::char_key_up(char)
         }
     }
 }
@@ -150,9 +150,9 @@ impl Simulate<SetTo<common_inputs::MouseButton, bool>> for Windows {
         } = simulatable;
         let button = windowsify_common_mouse_button(button);
         if is_down {
-            inner::mouse_button_down(button)
+            inner::send_input::mouse_button_down(button)
         } else {
-            inner::mouse_button_up(button)
+            inner::send_input::mouse_button_up(button)
         }
     }
 }
@@ -163,20 +163,20 @@ impl Simulate<SetTo<common_inputs::MousePosition, (i32, i32)>> for Windows {
             input: _,
             to: position,
         } = simulatable;
-        inner::virtual_desktop_denormalized_mouse_move_to(position.0, position.1);
+        inner::send_input::virtual_desktop_denormalized_mouse_move_to(position.0, position.1);
     }
 }
 
 impl Simulate<ChangeBy<common_inputs::MousePosition, (i32, i32)>> for Windows {
     fn simulate(&mut self, simulatable: ChangeBy<common_inputs::MousePosition, (i32, i32)>) {
         let ChangeBy { input: _, by } = simulatable;
-        inner::deaccelerated_mouse_move_by(by.0, by.1);
+        inner::send_input::deaccelerated_mouse_move_by(by.0, by.1);
     }
 }
 
 impl Simulate<ChangeBy<common_inputs::MouseScroll, (i32, i32)>> for Windows {
     fn simulate(&mut self, simulatable: ChangeBy<common_inputs::MouseScroll, (i32, i32)>) {
         let ChangeBy { input: _, by } = simulatable;
-        inner::mouse_scroll(by.0, by.1)
+        inner::send_input::mouse_scroll(by.0, by.1)
     }
 }
