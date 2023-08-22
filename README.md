@@ -5,6 +5,7 @@ Simulate input on Windows using [`kemuler`][1].
   - [x] Keyboard
   - [x] Mouse
   - [ ] Hardward (?)
+- [ ] Window messaging solution (unknown detail)
 
 [1]: https://github.com/kemuler/kemuler/ "kemuler Repository"
 [2]: https://github.com/enigo-rs/enigo/ "enigo Repository"
