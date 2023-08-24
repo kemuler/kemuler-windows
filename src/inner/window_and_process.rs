@@ -56,7 +56,7 @@ impl Window {
     }
 }
 
-struct Process {
+pub struct Process {
     id: u32,
     handle: ProcessHandle,
 }
