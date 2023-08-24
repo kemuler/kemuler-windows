@@ -10,6 +10,9 @@ mod inner;
 mod virtual_key;
 pub use virtual_key::VirtualKey;
 
+/// pub import for experimenting
+pub use inner::{window_and_process, window_messaging};
+
 impl VirtualKey {
     kemuler::button_like_impl_body! {}
 }

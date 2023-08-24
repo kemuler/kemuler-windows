@@ -1,9 +1,4 @@
-use std::{
-    fmt,
-    mem::{self, MaybeUninit},
-};
-
-use cfg_if::cfg_if;
+use std::mem::{self, MaybeUninit};
 use windows::{
     core::{Error, Result},
     Win32::{
@@ -13,18 +8,15 @@ use windows::{
     },
 };
 
-use crate::{MouseButton, VirtualKey};
+pub use Foundation::{HANDLE as ProcessHandle, HMODULE as ModuleHandle, HWND as WindowHandle};
+pub use Threading::PROCESS_ACCESS_RIGHTS as ProcessAccessRights;
 
-type ProcessAccessRights = Threading::PROCESS_ACCESS_RIGHTS;
-type ModuleHandle = Foundation::HMODULE;
-type WindowHandle = Foundation::HWND;
-
-struct Window {
+pub struct Window {
     handle: WindowHandle,
 }
 
 impl Window {
-    fn enumerate_top_windows() -> Result<Vec<Window>> {
+    pub fn enum_top_windows() -> Result<Vec<Window>> {
         let top_windows = enum_top_windows(1024)?;
         let windows = top_windows
             .into_iter()
@@ -33,7 +25,7 @@ impl Window {
         Ok(windows)
     }
 
-    fn enumerate_all_windows() -> Result<Vec<Window>> {
+    pub fn enum_all_windows() -> Result<Vec<Window>> {
         let top_windows = enum_top_windows(1024)?;
         let child_windows = top_windows
             .iter()
@@ -48,7 +40,7 @@ impl Window {
         Ok(windows)
     }
 
-    fn get_text(&self, buffer_capacity: usize) -> Result<String> {
+    pub fn get_text(&self, buffer_capacity: usize) -> Result<String> {
         let mut buffer: Vec<u16> = vec![0; buffer_capacity];
         let result = unsafe { WindowsAndMessaging::GetWindowTextW(self.handle, &mut buffer) };
         if result == 0 {
@@ -58,11 +50,15 @@ impl Window {
         let string = String::from_utf16(&buffer).unwrap();
         Ok(string)
     }
+
+    pub fn handle(&self) -> WindowHandle {
+        self.handle
+    }
 }
 
 struct Process {
     id: u32,
-    handle: Foundation::HANDLE,
+    handle: ProcessHandle,
 }
 
 impl Process {
@@ -82,7 +78,7 @@ impl Process {
         Process::open(permission, process_id)
     }
 
-    fn get_a_module(&self) -> Result<ModuleHandle> {
+    pub fn get_a_module(&self) -> Result<ModuleHandle> {
         let mut module = MaybeUninit::<ModuleHandle>::uninit();
         let mut size = 0;
         // SAFETY: the pointer is valid and the size is correct.
@@ -103,7 +99,7 @@ impl Process {
         Ok(module)
     }
 
-    fn get_name_from_module(&self, module: ModuleHandle) -> Result<String> {
+    pub fn get_name_from_module(&self, module: ModuleHandle) -> Result<String> {
         let mut buffer: Vec<u16> = vec![0; 128];
         let length = unsafe { ProcessStatus::GetModuleBaseNameW(self.handle, module, &mut buffer) };
         if length == 0 {
@@ -114,7 +110,7 @@ impl Process {
         Ok(String::from_utf16(&buffer).unwrap())
     }
 
-    fn get_file_path(&self, buffer_capacity: usize) -> Result<String> {
+    pub fn get_file_path(&self, buffer_capacity: usize) -> Result<String> {
         let mut buffer: Vec<u16> = vec![0; buffer_capacity];
         let length = unsafe {
             ProcessStatus::GetModuleFileNameExW(self.handle, Foundation::HMODULE(0), &mut buffer)
@@ -126,7 +122,7 @@ impl Process {
         Ok(string)
     }
 
-    fn get_name(&self, buffer_capacity: usize) -> Result<String> {
+    pub fn get_name(&self, buffer_capacity: usize) -> Result<String> {
         let mut buffer: Vec<u16> = vec![0; buffer_capacity];
         let length = unsafe {
             ProcessStatus::GetModuleBaseNameW(self.handle, Foundation::HMODULE(0), &mut buffer)
@@ -140,6 +136,14 @@ impl Process {
         unsafe { buffer.set_len(length as usize) };
         Ok(String::from_utf16(&buffer).unwrap())
     }
+
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn handle(&self) -> ProcessHandle {
+        self.handle
+    }
 }
 
 impl Drop for Process {
@@ -150,7 +154,7 @@ impl Drop for Process {
 
 #[test]
 fn uh_main() {
-    let windows = Window::enumerate_all_windows().unwrap();
+    let windows = Window::enum_all_windows().unwrap();
     let mut windows_processes = windows
         .into_iter()
         .filter_map(|window| {
@@ -250,109 +254,5 @@ fn get_window_thread_process_id(window_handle: WindowHandle) -> Result<(u32, u32
         Err(Error::from_win32())
     } else {
         Ok((thread_id, process_id))
-    }
-}
-
-fn send_message(
-    window_handle: WindowHandle,
-    msg: u32,
-    wparam: usize,
-    lparam: isize,
-) -> Foundation::LRESULT {
-    unsafe {
-        WindowsAndMessaging::SendMessageW(
-            window_handle,
-            msg,
-            Foundation::WPARAM(wparam),
-            Foundation::LPARAM(lparam),
-        )
-    }
-}
-
-fn key_down(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
-    send_message(
-        window_handle,
-        WindowsAndMessaging::WM_KEYDOWN,
-        key.code().0 as usize,
-        0,
-    )
-}
-
-fn key_up(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
-    send_message(
-        window_handle,
-        WindowsAndMessaging::WM_KEYUP,
-        key.code().0 as usize,
-        0,
-    )
-}
-
-cfg_if! {
-    if #[cfg(target_pointer_width = "64")] {
-        fn lparam_mouse_pos(x: i16, y: i16) -> isize {
-            let x = x as isize & 0xffffffff;
-            let y = y as isize & 0xffffffff;
-            (y << 32) | x
-        }
-    } else if #[cfg(target_pointer_width = "32")] {
-        fn lparam_mouse_pos(x: i16, y: i16) -> isize {
-            let x = x as isize & 0xffff;
-            let y = y as isize & 0xffff;
-            (y << 16) | x
-        }
-    } else {
-        fn lparam_mouse_pos(x: i16, y: i16) -> isize {
-            panic!("This is not implemented for target that pointer width is not 32 or 64")
-        }
-    }
-}
-
-fn wparam_xbutton1() -> usize {
-    let pointer_bit_size = mem::size_of::<usize>() * 8;
-    1 << (pointer_bit_size / 2)
-}
-
-fn wparam_xbutton2() -> usize {
-    let pointer_bit_size = mem::size_of::<usize>() * 8;
-    2 << (pointer_bit_size / 2)
-}
-
-fn mouse_button_down(
-    window_handle: WindowHandle,
-    mouse_button: MouseButton,
-    x: i16,
-    y: i16,
-) -> Foundation::LRESULT {
-    match mouse_button {
-        MouseButton::Left => send_message(
-            window_handle,
-            WindowsAndMessaging::WM_LBUTTONDOWN,
-            0,
-            lparam_mouse_pos(x, y),
-        ),
-        MouseButton::Middle => send_message(
-            window_handle,
-            WindowsAndMessaging::WM_MBUTTONDOWN,
-            0,
-            lparam_mouse_pos(x, y),
-        ),
-        MouseButton::Right => send_message(
-            window_handle,
-            WindowsAndMessaging::WM_RBUTTONDOWN,
-            0,
-            lparam_mouse_pos(x, y),
-        ),
-        MouseButton::X1 => send_message(
-            window_handle,
-            WindowsAndMessaging::WM_XBUTTONDOWN,
-            wparam_xbutton1(),
-            lparam_mouse_pos(x, y),
-        ),
-        MouseButton::X2 => send_message(
-            window_handle,
-            WindowsAndMessaging::WM_XBUTTONDOWN,
-            wparam_xbutton2(),
-            lparam_mouse_pos(x, y),
-        ),
     }
 }
