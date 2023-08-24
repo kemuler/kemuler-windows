@@ -22,7 +22,7 @@ fn send_message(
     }
 }
 
-fn key_down(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
+pub fn key_down(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
     send_message(
         window_handle,
         WindowsAndMessaging::WM_KEYDOWN,
@@ -31,7 +31,7 @@ fn key_down(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT
     )
 }
 
-fn key_up(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
+pub fn key_up(window_handle: WindowHandle, key: VirtualKey) -> Foundation::LRESULT {
     send_message(
         window_handle,
         WindowsAndMessaging::WM_KEYUP,
@@ -70,7 +70,7 @@ fn wparam_xbutton2() -> usize {
     2 << (pointer_bit_size / 2)
 }
 
-fn mouse_button_down(
+pub fn mouse_button_down(
     window_handle: WindowHandle,
     mouse_button: MouseButton,
     x: i16,
