@@ -10,8 +10,72 @@ mod inner;
 mod virtual_key;
 pub use virtual_key::VirtualKey;
 
+macro_rules! button_like_impl_body {
+    () => {
+        /// Set this button state
+        /// This is a convenience shorthand for
+        /// ```
+        /// # use kemuler::input_event::*;
+        /// # let this = 0i32;
+        /// # let to = 0i32;
+        /// SetTo { input: this, to: to }
+        /// # ;
+        /// ```
+        pub fn set_to(self, to: bool) -> kemuler::input_event::SetTo<Self, bool> {
+            kemuler::input_event::SetTo::new(self, to)
+        }
+
+        /// Press the button.
+        /// This is a convenience shorthand for
+        /// ```
+        /// # use kemuler::input_event::*;
+        /// # let this = 0i32;
+        /// SetTo { input: this, to: true }
+        /// # ;
+        /// ```
+        pub fn down(self) -> kemuler::input_event::SetTo<Self, bool> {
+            self.set_to(true)
+        }
+
+        /// Release the key
+        /// This is a convenience shorthand for
+        /// ```
+        /// # use kemuler::input_event::*;
+        /// # let this = 0i32;
+        /// SetTo { input: this, to: false }
+        /// # ;
+        /// ```
+        pub fn up(self) -> kemuler::input_event::SetTo<Self, bool> {
+            self.set_to(false)
+        }
+
+        /// Press and release the button consecutively.
+        /// This is a convenience shorthand for
+        /// ```
+        /// # use kemuler::{prelude::*, input_event::*, combinator::*};
+        /// # let this = 0i32;
+        /// SimTuple((
+        ///     SetTo { input: this, to: true },
+        ///     SetTo { input: this, to: false }
+        /// ))
+        /// # ;
+        /// ```
+        pub fn click(
+            self,
+        ) -> kemuler::combinator::SimTuple<(
+            kemuler::input_event::SetTo<Self, bool>,
+            kemuler::input_event::SetTo<Self, bool>,
+        )>
+        where
+            Self: Clone,
+        {
+            kemuler::combinator::SimTuple((self.clone().down(), self.up()))
+        }
+    };
+}
+
 impl VirtualKey {
-    kemuler::button_like_impl_body! {}
+    button_like_impl_body! {}
 }
 
 impl fmt::Display for VirtualKey {
@@ -35,7 +99,7 @@ pub enum MouseButton {
 }
 
 impl MouseButton {
-    kemuler::button_like_impl_body! {}
+    button_like_impl_body! {}
 }
 
 impl fmt::Display for MouseButton {
